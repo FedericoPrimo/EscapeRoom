@@ -1,0 +1,71 @@
+#include <arpa/inet.h>
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <string.h>
+#include <stdio.h>
+#include <stdlib.h>
+
+/*
+struct sockaddr_in {
+    sa_family_t     sin_family; // Address family, si mette AF_INET
+    in_port_t       sin_port;   // network order
+    struct in_addr  sin_addr;   // indirizzo
+}
+
+struct in_addr {
+    uint32_t s_addr;
+};
+*/
+
+int main(){
+    int ret, sd, addr_len, msg_len;
+    char buf[6];
+    struct sockaddr_in my_addr, server_addr;
+    addr_len = sizeof(server_addr);
+    msg_len = sizeof(buf);
+    sd = socket(AF_INET, SOCK_STREAM, 0);
+    if(sd == -1){
+        perror("Errore: creazione socket client\n");
+        exit(1);
+    }
+
+    // Creazione indirizzo server
+    memset(&server_addr, 0, addr_len);
+    server_addr.sin_family = AF_INET;
+    server_addr.sin_port = htons(4243);
+    inet_pton(AF_INET, "127.0.0.1", &server_addr.sin_addr);
+    printf("Tentativo di connessione con il server\n");
+    ret = connect(sd, (struct sockaddr*)&server_addr, addr_len);
+    printf("Connessione Stabilita!\n");
+    while(1){
+        printf("Messaggio: ");
+        scanf("%5s", buf);
+
+        if(!strcmp("quit!", buf)){
+            break;
+        }
+        ret = send(sd, (void*)buf, msg_len, 0);
+        
+        if(ret == -1){
+            perror("Errore: creazione socket client\n");
+            exit(1);
+        }
+        printf("Messaggio inviato: %s\n", buf);
+
+        ret = recv(sd, (void*)&buf, msg_len, 0);
+        if(!ret){
+            printf("socket remoto chiuso.\n");
+            break;
+        }
+        if(ret == -1){
+            perror("Errore: recv client\n");
+            exit(1);
+        }
+        printf("Messaggio ricevuto: %s\n", buf);
+
+    }
+    close(sd);
+    exit(0);
+
+}
