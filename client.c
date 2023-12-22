@@ -18,26 +18,32 @@ struct in_addr {
 };
 */
 
-int main(){
+int main(int argc, char* argv[]){
     int ret, sd, addr_len, msg_len;
+    uint16_t porta;
     char buf[6];
     struct sockaddr_in my_addr, server_addr;
     addr_len = sizeof(server_addr);
     msg_len = sizeof(buf);
     sd = socket(AF_INET, SOCK_STREAM, 0);
     if(sd == -1){
-        perror("Errore: creazione socket client\n");
+        perror("Errore");
         exit(1);
     }
 
     // Creazione indirizzo server
     memset(&server_addr, 0, addr_len);
     server_addr.sin_family = AF_INET;
-    server_addr.sin_port = htons(4243);
+    porta = htons(4242);
+    server_addr.sin_port = porta;
     inet_pton(AF_INET, "127.0.0.1", &server_addr.sin_addr);
     printf("Tentativo di connessione con il server\n");
     ret = connect(sd, (struct sockaddr*)&server_addr, addr_len);
-    printf("Connessione Stabilita!\n");
+    if(ret == -1){
+        perror("Errore");
+        exit(1);
+    }
+    printf("Connessione Stabilita con porta: %d\n", ntohs(porta));
     while(1){
         printf("Messaggio: ");
         scanf("%5s", buf);
@@ -48,7 +54,7 @@ int main(){
         ret = send(sd, (void*)buf, msg_len, 0);
         
         if(ret == -1){
-            perror("Errore: creazione socket client\n");
+            perror("Errore");
             exit(1);
         }
         printf("Messaggio inviato: %s\n", buf);
@@ -59,7 +65,7 @@ int main(){
             break;
         }
         if(ret == -1){
-            perror("Errore: recv client\n");
+            perror("Errore");
             exit(1);
         }
         printf("Messaggio ricevuto: %s\n", buf);

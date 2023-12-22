@@ -18,8 +18,9 @@ struct in_addr {
 };
 */
 
-int main(){
+int main(int argc, char* argv[]){
     int sd, new_sd, ret, len, msg_len;
+    uint16_t porta;
     char buf[6];
     msg_len = sizeof(buf);
     pid_t pid;
@@ -32,32 +33,41 @@ int main(){
     
     // inizializzazione
     memset(&my_addr, 0, sizeof(my_addr));
-    my_addr.sin_port = htons(4243);
+
+    // Verifica che ci sia un argomento per la porta
+    if (argc != 2) {
+        printf("Inserire correttamente la porta.\n\n\tSintassi: ./server <porta>\n\n");
+        exit(1);
+    }
+    porta = htons(atoi(argv[1]));
+
+    my_addr.sin_port = porta;
     my_addr.sin_family = AF_INET;
     inet_pton(AF_INET, "127.0.0.1", &my_addr.sin_addr);
 
-    // inizio vero
+    // Inizializzazione server
     ret = bind(sd, (struct sockaddr*)&my_addr, sizeof(my_addr));
     if(ret == -1){
-        perror("Errore: bind server\n");
+        perror("Errore");
         exit(1);
     }
+    printf("Fine Inizializzazione.\nServer in ascolto sulla porta %d\n", ntohs(porta));
     ret = listen(sd, 10);
     if(ret == -1){
-        perror("Errore: listen server\n");
+        perror("Errore");
         exit(1);
     }
     len = sizeof(client_addr);
-    printf("Fine Inizializzazione\n");
     while(1){
         new_sd = accept(sd, (struct sockaddr*)&client_addr, &len);
+        printf("Connessione accettata\n");
         if(new_sd == -1){
-            perror("Errore: accept server\n");
+            perror("Errore");
             exit(1);
         }
         pid = fork();
         if(pid == -1){
-            perror("Errore: fork server\n");
+            perror("Errore");
             exit(1);
         }
         if(!pid){
@@ -71,7 +81,7 @@ int main(){
                     break;
                 }
                 if(ret == -1){
-                    perror("Errore: recv server\n");
+                    perror("Errore");
                     exit(1);
                 }
                 printf("Messaggio ricevuto: %s\n", buf);
@@ -85,7 +95,7 @@ int main(){
 
                 ret = send(new_sd, (void*)buf, msg_len, 0);
                 if(ret == -1){
-                    perror("Errore: creazione socket server\n");
+                    perror("Errore");
                     exit(1);
                 }
                 printf("Messaggio inviato: %s\n", buf);
