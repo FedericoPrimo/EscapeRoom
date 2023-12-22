@@ -1,5 +1,5 @@
+.vscode
 client
 server
-.vscode
 utility
-utility.o
+*.o

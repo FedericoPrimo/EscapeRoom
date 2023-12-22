@@ -23,13 +23,13 @@ struct in_addr {
 */
 
 int main(int argc, char* argv[]){
-    int sd_init, new_sd, ret, len, fd_max = 0, i;
+    int sd_init, sd_game, new_sd, ret, len, fd_max = 0, i;
     char buf[256], comando[6];
     bool acceso = 0;
     fd_set read_fs;
     fd_set master;
     uint16_t porta;
-    pid_t pid;
+    
     struct sockaddr_in my_addr, client_addr;
 
     // Inizializza il set di file descriptor
@@ -107,6 +107,7 @@ int main(int argc, char* argv[]){
                             printf("Server già acceso sulla porta %d\n", ntohs(porta));
                             continue;
                         }
+                        sd_game = creazione_sock_server(&my_addr);
                         
                             
                     } else if (!strcmp(comando, "stop")){

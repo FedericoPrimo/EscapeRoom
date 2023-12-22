@@ -1,22 +1,28 @@
 # Makefile
 
 CC = gcc
-CFLAGS = -Wall -g
+CFLAGS = -Wall -c
 
-all: server client utility
+all: server client
 
-server: utility
-	$(CC) $(CFLAGS) server.c utility.o -o server
+server: server.o utility.o
+	$(CC) -Wall utility.o server.o -o server
 
-client: utility
-	$(CC) $(CFLAGS) client.c utility.o -o  utility.c
+client: client.o utility.o
+	$(CC) -Wall client.o utility.o -o client
 
-utility:
-	$(CC) $(CFLAGS) utility.c -c -o utility
+server.o: server.c
+	$(CC) $(CFLAGS) server.c -o server.o
+
+client.o: client.c
+	$(CC) $(CFLAGS) client.c -o client.o
+
+utility.o: utility.c utility.h
+	$(CC) $(CFLAGS) utility.c -o utility.o
 
 clean:
-	rm -f server client utility
+	rm *.o server client
 
 run: all
-	gnome-terminal --tab --title="Server Terminal" --command="bash -c './server; exec bash'" \
-                   --tab --title="Client Terminal" --command="bash -c './client; exec bash'"
+	gnome-terminal --tab --title="Server Terminal" --command="bash -c './server 4242; exec bash'" \
+                   --tab --title="Client Terminal" --command="bash -c './client 4242; exec bash'"
