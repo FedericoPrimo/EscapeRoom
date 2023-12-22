@@ -5,6 +5,7 @@
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include "utility.h"
 
 /*
 struct sockaddr_in {
@@ -21,7 +22,7 @@ struct in_addr {
 int main(int argc, char* argv[]){
     int ret, sd, addr_len, msg_len;
     uint16_t porta;
-    char buf[6];
+    char buf[64];
     struct sockaddr_in my_addr, server_addr;
     addr_len = sizeof(server_addr);
     msg_len = sizeof(buf);

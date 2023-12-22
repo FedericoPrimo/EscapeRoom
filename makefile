@@ -1,18 +1,22 @@
 # Makefile
 
 CC = gcc
-CFLAGS =
+CFLAGS = -Wall -g
 
-all: clean server client
+all: server client utility
+
+server: utility
+	$(CC) $(CFLAGS) server.c utility.o -o server
+
+client: utility
+	$(CC) $(CFLAGS) client.c utility.o -o  utility.c
+
+utility:
+	$(CC) $(CFLAGS) utility.c -c -o utility
 
 clean:
-	rm -f server client
+	rm -f server client utility
 
-server:
-	$(CC) $(CFLAGS) -o server server.c
-
-client:
-	$(CC) $(CFLAGS) -o client client.c
 run: all
 	gnome-terminal --tab --title="Server Terminal" --command="bash -c './server; exec bash'" \
                    --tab --title="Client Terminal" --command="bash -c './client; exec bash'"
