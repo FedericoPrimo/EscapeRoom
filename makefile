@@ -24,5 +24,5 @@ clean:
 	rm *.o server client
 
 run: all
-	gnome-terminal --tab --title="Server Terminal" --command="bash -c './server 4242; exec bash'" \
+	gnome-terminal --tab --title="Server Terminal" --command="bash -c './server; exec bash'" \
                    --tab --title="Client Terminal" --command="bash -c './client 4242; exec bash'"

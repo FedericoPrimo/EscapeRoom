@@ -20,12 +20,19 @@ struct in_addr {
 */
 
 int main(int argc, char* argv[]){
-    int ret, sd, addr_len, msg_len;
+    int ret, sd;
     uint16_t porta;
     char buf[64];
     struct sockaddr_in my_addr, server_addr;
-    addr_len = sizeof(server_addr);
-    msg_len = sizeof(buf);
+
+    // Verifica che ci sia un argomento per la porta
+    if (argc != 2) {
+        printf("Inserire correttamente la porta.\n\n\tSintassi: ./client <porta>\n\n");
+        exit(1);
+    }
+    porta = htons(atoi(argv[1]));
+
+    // creazione socket
     sd = socket(AF_INET, SOCK_STREAM, 0);
     if(sd == -1){
         perror("Errore");

@@ -22,8 +22,8 @@ struct in_addr {
 };
 */
 
-int main(int argc, char* argv[]){
-    int sd_init, sd_game, new_sd, ret, len, fd_max = 0, i;
+int main(){
+    int sd_game, new_sd, ret, len, fd_max = 0, i, client_connessi = 0;
     char buf[256], comando[6];
     bool acceso = 0;
     fd_set read_fs;
@@ -31,56 +31,17 @@ int main(int argc, char* argv[]){
     uint16_t porta;
     
     struct sockaddr_in my_addr, client_addr;
-
+    
     // Inizializza il set di file descriptor
     FD_ZERO(&master);
     FD_ZERO(&read_fs);
 
     // Aggiungi l'input standard (stdin) al set
     FD_SET(STDIN_FILENO, &master);
-    
-    sd_init = socket(AF_INET, SOCK_STREAM, 0);
-    if(sd_init == -1){
-        perror("Errore: creazione socket server\n");
-        exit(1);
-    }
-    printf("Socket creato\n");
-    
-    // Inizializzazione
-    memset(&my_addr, 0, sizeof(my_addr));
 
-    // Verifica che ci sia un argomento per la porta
-    if (argc != 2) {
-        printf("Inserire correttamente la porta.\n\n\tSintassi: ./server <porta>\n\n");
-        exit(1);
-    }
-    porta = htons(atoi(argv[1]));
-
-    my_addr.sin_port = porta;
-    my_addr.sin_family = AF_INET;
-    inet_pton(AF_INET, "127.0.0.1", &my_addr.sin_addr);
-
-    ret = bind(sd_init, (struct sockaddr*)&my_addr, sizeof(my_addr));
-    if(ret == -1){
-        perror("Errore");
-        exit(1);
-    }
-    printf("Assegnato indirizzo al socket\n");
-    ret = listen(sd_init, 10);
-    if(ret == -1){
-        perror("Errore");
-        exit(1);
-    }
-    printf("Socket in ascolto, è possibile ad UN SOLO client di collegarsi e mandare comandi alla porta %d\n", ntohs(porta));
-    // Inizializza il set di file descriptor
-    FD_SET(sd_init, &master);
-    len = sizeof(client_addr);
-    if(sd_init > fd_max){
-        fd_max = sd_init; // fd_max contiene ora il valore massimo dei descrittori di socket master
-    }
     printf("Fine inizializzazione\n");
     // mostro la console dei comandi
-    mostra_comandi();
+    mostra_comandi_console();
 
     while(1){
 
@@ -101,32 +62,72 @@ int main(int argc, char* argv[]){
                     // Gestione input
                     fgets(buf, sizeof(buf), stdin);
                     sscanf(buf, "%5s %d", comando, &porta);
+                    porta = htons(porta);
                     if (!strcmp(comando, "start")) {
                         // start <port>, inserisco nell'fd_set il descrittore per un nuovo server
+                        printf("Avvio del server di gioco...\n");
                         if(acceso){
                             printf("Server già acceso sulla porta %d\n", ntohs(porta));
                             continue;
                         }
-                        sd_game = creazione_sock_server(&my_addr);
+                        sd_game = creazione_sock_server(&my_addr, porta);
+
+                        // Metto il socket del server nel set
+                        FD_SET(sd_game, &master);
+                        if(sd_game > fd_max){
+                            fd_max = sd_game; // fd_max contiene ora il valore massimo dei descrittori di socket master
+                        }
+
+                        // Resto in ascolto per giocatori che si vogliono connettere alla mia partita
+                        ret = listen(sd_game, 2);
+                        if(ret == -1){
+                            perror("Errore");
+                            continue;
+                        }
+                        printf("Socket in ascolto, è possibile collegarsi alla porta %d per giocare.\n", ntohs(porta));
                         
                             
                     } else if (!strcmp(comando, "stop")){
                         // stop
                         // metti roba, controlla se partite in corso
+                        if(!client_connessi){
+                            printf("Arresto del server, speriamo di averti intrattenuto con la nostra Escape Room!\n");
+                            close(sd_game);
+                            exit(0);
+                        }
+
                     } else {
                         printf("Comando inesistente.\n");
-                        mostra_comandi();
+                        mostra_comandi_console();
                     }             
                 }
-                if(i == sd_init){
-                    if(acceso){
-                        ret = accept(sd_init, (struct sockaddr*)&client_addr, &len);
-                        if(ret == -1){
-                            perror("Errore");
-                            exit(1);
-                        }
-                        printf("Connessione accettata sulla porta &d\n", ntohs(porta));
+                if(i == sd_game){
+                    len = sizeof(client_addr);
+
+                    // le richieste arrivano quando un nuovo giocatore vuole connettersi
+                    new_sd = accept(sd_game, (struct sockaddr*)&client_addr, &len);
+                    if(new_sd == -1){
+                        perror("Errore");
+                        continue;
                     }
+                    printf("Connessione accettata sulla porta %d\n", ntohs(porta));
+
+                    /* tengo traccia dei client connessi, mi serve per il comando stop. */
+                    client_connessi++;
+
+                    FD_SET(new_sd, &master);
+                    if(new_sd > fd_max){
+                        fd_max = new_sd; // fd_max contiene ora il valore massimo dei descrittori di socket master
+                    }
+
+                    /* Da qui inizia l'escape room per il client accettato, devo mandargli la struttura per
+                    caricare una partita. */
+                    
+
+                    
+                }
+                else{
+                    // è una richiesta di un giocatore, devo prima identificarlo.
                 }
             }
         }

@@ -11,7 +11,7 @@
 #include <stdlib.h>
 #include <stdbool.h>
 
-void mostra_comandi();
-int creazione_sock_server(struct sockaddr_in *server_address);
+void mostra_comandi_console();
+int creazione_sock_server(struct sockaddr_in *server_address, int porta);
 
 #endif
