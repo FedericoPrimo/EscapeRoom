@@ -5,10 +5,10 @@ CFLAGS = -Wall -c
 
 all: server client
 
-server: server.o utility.o
+server: server.o utility.o account.o
 	$(CC) -Wall utility.o server.o -o server
 
-client: client.o utility.o
+client: client.o utility.o account.o
 	$(CC) -Wall client.o utility.o -o client
 
 server.o: server.c
@@ -19,6 +19,9 @@ client.o: client.c
 
 utility.o: utility.c utility.h
 	$(CC) $(CFLAGS) utility.c -o utility.o
+
+account.o: account.c account.h
+	$(CC) $(CFLAGS) account.c -o account.o
 
 clean:
 	rm *.o server client

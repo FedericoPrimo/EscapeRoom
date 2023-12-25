@@ -10,7 +10,8 @@ void mostra_comandi_console(){
 
 }
 
-/* Racchiude socket() e bind(), la porta deve essere fornita in formato network.*/
+/* Racchiude socket() e bind(), la porta deve essere fornita in formato network.
+Restituiscce il socket*/
 int creazione_sock_server(struct sockaddr_in *my_addr, int porta){
     int sd, ret;
 
@@ -37,4 +38,39 @@ int creazione_sock_server(struct sockaddr_in *my_addr, int porta){
     printf("Assegnato indirizzo e porta al socket\n");
 
     return sd;
+}
+/* Racchiude socket(), la porta deve essere fornita in formato network.
+Restituisce il socket*/
+int creazione_indirizzo_server(struct sockaddr_in *server_addr, int porta){
+    int sd, ret;
+
+    // Creazione socket
+    sd = socket(AF_INET, SOCK_STREAM, 0);
+    if(sd == -1){
+        perror("Errore");
+        exit(1);
+    }
+    printf("Socket creato\n");
+    
+    // Inizializzazione
+    memset(server_addr, 0, sizeof(*server_addr));
+
+    server_addr->sin_port = porta;
+    server_addr->sin_family = AF_INET;
+    inet_pton(AF_INET, "127.0.0.1", &server_addr->sin_addr);
+
+    return sd;
+}
+
+int manda_informazioni(unsigned char *email, unsigned char *passw){
+    char buf[256];
+    char comando[6];
+    strcpy(&comando, "login");
+    int ret;
+
+    // serializzo il comando
+    buffer
+
+    sprintf(buf, "%30s %20s", email, passw);
+    return ret;
 }

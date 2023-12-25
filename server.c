@@ -119,15 +119,11 @@ int main(){
                     if(new_sd > fd_max){
                         fd_max = new_sd; // fd_max contiene ora il valore massimo dei descrittori di socket master
                     }
-
-                    /* Da qui inizia l'escape room per il client accettato, devo mandargli la struttura per
-                    caricare una partita. */
-                    
-
-                    
                 }
                 else{
-                    // è una richiesta di un giocatore, devo prima identificarlo.
+                    // è una richiesta di un giocatore, identifico il comando
+                    recv
+
                 }
             }
         }

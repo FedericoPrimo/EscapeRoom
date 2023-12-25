@@ -22,8 +22,8 @@ struct in_addr {
 int main(int argc, char* argv[]){
     int ret, sd;
     uint16_t porta;
-    char buf[64];
-    struct sockaddr_in my_addr, server_addr;
+    char buf[256], email[30], passw[20];
+    struct sockaddr_in server_addr;
 
     // Verifica che ci sia un argomento per la porta
     if (argc != 2) {
@@ -32,42 +32,41 @@ int main(int argc, char* argv[]){
     }
     porta = htons(atoi(argv[1]));
 
-    // creazione socket
-    sd = socket(AF_INET, SOCK_STREAM, 0);
-    if(sd == -1){
-        perror("Errore");
-        exit(1);
-    }
-
-    // Creazione indirizzo server
-    memset(&server_addr, 0, addr_len);
-    server_addr.sin_family = AF_INET;
-    porta = htons(4242);
-    server_addr.sin_port = porta;
-    inet_pton(AF_INET, "127.0.0.1", &server_addr.sin_addr);
-    printf("Tentativo di connessione con il server\n");
-    ret = connect(sd, (struct sockaddr*)&server_addr, addr_len);
+    // Creazione socket client
+    sd = creazione_indirizzo_server(&server_addr, porta);
+    printf("Inizializzata struttura per l'indirizzo del server e socket del client\n");
+    
+    // Connessione al server
+    printf("Tentativo di connessione con il server...\n");
+    ret = connect(sd, (struct sockaddr*)&server_addr, sizeof(server_addr));
     if(ret == -1){
         perror("Errore");
         exit(1);
     }
     printf("Connessione Stabilita con porta: %d\n", ntohs(porta));
-    while(1){
-        printf("Messaggio: ");
-        scanf("%5s", buf);
+    
+    // Connessione effettuata, inizia lo scambio di informazioni con il server
+    printf("Per favore identificati.\n");
+    printf("Email: ");
+    scanf("%30s", email);
+    printf("Password: ");
+    scanf("%20s", passw);
+    ret = manda_informazioni(&email, &passw);
+    if(ret == -1){
+        perror("Errore");
+        exit(1);
+    }
 
-        if(!strcmp("quit!", buf)){
-            break;
-        }
-        ret = send(sd, (void*)buf, msg_len, 0);
-        
+    // inizia il gioco
+    while(1){
+
+        ret = send(sd, (void*)buf, sizeof(buf), 0);
         if(ret == -1){
             perror("Errore");
             exit(1);
         }
-        printf("Messaggio inviato: %s\n", buf);
 
-        ret = recv(sd, (void*)&buf, msg_len, 0);
+        ret = recv(sd, (void*)&buf, sizeof(buf), 0);
         if(!ret){
             printf("socket remoto chiuso.\n");
             break;
