@@ -7,7 +7,9 @@ struct Account* new_account(char* email, char* passw){
     struct Account* save_ptr = malloc(sizeof(struct Account));
     strcpy(save_ptr->email, email);
     strcpy(save_ptr->passw, passw);
-    save_ptr = NULL;
+    save_ptr->id = ++contatore;
+    save_ptr->next = NULL;
+    save_ptr->status = offline;
     return save_ptr;
 }
 
@@ -48,4 +50,28 @@ void ins_account(struct Account** lista, struct Account* account){
         account->next = *lista;
         *lista = account;
     }
+}
+
+/* Data una lista di strutture ACCOUNT, controlla se è
+ presente un account specifico dati email e password, se non trova nulla ritorna NULL*/
+struct Account* check_account(struct Account** lista, unsigned char *email, unsigned char *password){
+    if(*lista == NULL){
+        printf("Account non presente nella lista.\n");
+        return NULL;
+    }
+    struct Account* corrente = *lista;
+
+    // Cerca l'account nella lista
+    while (corrente != NULL) {
+        if (strcmp(corrente->email, email) == 0 && strcmp(corrente->passw, password) == 0) {
+            printf("Account trovato nella lista.\n");
+            return corrente;
+        }
+        corrente = corrente->next;
+    }
+
+    // Account non trovato nella lista
+    printf("Account non trovato nella lista.\n");
+    return NULL;
+
 }

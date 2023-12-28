@@ -21,8 +21,9 @@ struct in_addr {
 
 int main(int argc, char* argv[]){
     int ret, sd;
+    int i;
     uint16_t porta;
-    char buf[256], email[30], passw[20];
+    char buf[256], comando[6], email[30], passw[20];
     struct sockaddr_in server_addr;
 
     // Verifica che ci sia un argomento per la porta
@@ -37,8 +38,13 @@ int main(int argc, char* argv[]){
     printf("Inizializzata struttura per l'indirizzo del server e socket del client\n");
     
     // Connessione al server
-    printf("Tentativo di connessione con il server...\n");
-    ret = connect(sd, (struct sockaddr*)&server_addr, sizeof(server_addr));
+    for(i = 0; i < 5; i++){
+        printf("Tentativo di connessione con il server...\n");
+        ret = connect(sd, (struct sockaddr*)&server_addr, sizeof(server_addr));
+        if(!ret)
+            break;
+        sleep(3);
+    }
     if(ret == -1){
         perror("Errore");
         exit(1);
@@ -48,37 +54,66 @@ int main(int argc, char* argv[]){
     // Connessione effettuata, inizia lo scambio di informazioni con il server
     printf("Per favore identificati.\n");
     printf("Email: ");
-    scanf("%30s", email);
+    scanf("%29s", email);
     printf("Password: ");
-    scanf("%20s", passw);
-    ret = manda_informazioni(&email, &passw);
+    scanf("%19s", passw);
+
+    // Mando email e password in formato binary
+    ret = manda_informazioni(sd, &email, &passw);
     if(ret == -1){
         perror("Errore");
         exit(1);
     }
+    // Mi aspetto un messaggio per sapere se sono stato autenticato o registrato
+    ret = recv(sd, buf, 2, 0);
+    if(ret < 2){
+        perror("Errore nella ricezione dell'esito del login");
+        exit(1);
+    }
 
-    // inizia il gioco
+    // Qua ci aspettiamo il la risposta alla richiesta di connessione
+    if(!strcmp(buf, "1")){
+        printf("Autenticato! Bentornato nell'escape room!\n");
+    } else if(!strcmp(buf, "0")){
+        printf("Account non trovato, ti abbiamo registrato!\n");
+    } else {
+        printf("Account già online, impossibile connettersi!\n");
+        return 0;
+    }
+
+    // Ora devo comunicare al server quale scenario ho scelto.
+    mostra_possibili_scenari();
     while(1){
-
-        ret = send(sd, (void*)buf, sizeof(buf), 0);
-        if(ret == -1){
-            perror("Errore");
-            exit(1);
-        }
-
-        ret = recv(sd, (void*)&buf, sizeof(buf), 0);
-        if(!ret){
-            printf("socket remoto chiuso.\n");
+        // Mi serve uno scenario valido
+        scanf("%d", i);
+        if(i == 1 || i == 2){
+            printf("Numero non valido\n");
             break;
         }
-        if(ret == -1){
-            perror("Errore");
-            exit(1);
-        }
-        printf("Messaggio ricevuto: %s\n", buf);
-
     }
-    close(sd);
-    exit(0);
 
+    // Mando il comando
+    strcpy(comando, "scene");
+    ret = send(sd, comando, sizeof(comando), 0);
+    if(ret == -1){
+        perror("Errore nell'invio dello scenario");
+        exit(1);
+    }
+    // Mando il numero dello scenario
+    sprintf(buf, "%d", i);
+    ret = send(sd, buf, sizeof(buf), 0);
+    if(ret == -1){
+        perror("Errore nell'invio dello scenario");
+        exit(1);
+    }
+    while(1){
+        
+
+
+
+        printf("\nFine del main\n");
+        sleep(5);
+    }
+    close(sd); 
+    exit(0);
 }

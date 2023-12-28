@@ -24,11 +24,14 @@ struct in_addr {
 
 int main(){
     int sd_game, new_sd, ret, len, fd_max = 0, i, client_connessi = 0;
-    char buf[256], comando[6];
+    int id[20]; //array contenente gli id dell'account dei client
+    char buf[20], comando[6];
     bool acceso = 0;
     fd_set read_fs;
     fd_set master;
     uint16_t porta;
+    char dati[2];
+    struct Account* lista_account = NULL;
     
     struct sockaddr_in my_addr, client_addr;
     
@@ -54,18 +57,27 @@ int main(){
 
         //ciclo per tutto il nuovo set contente solo i fd pronti
         select(fd_max+1, &read_fs, NULL, NULL, NULL);
+
         for(i = 0; i <= fd_max; i++){
-            if(FD_ISSET(i, &read_fs)){ // se è pronto in lettura
+
+            if(FD_ISSET(i, &read_fs)){ // Se è pronto in lettura stdin, il socket listener o uno di scambio dati
+
                 if(i == STDIN_FILENO){
 
                     // Comando inserito nella console del server
                     // Gestione input
                     fgets(buf, sizeof(buf), stdin);
-                    sscanf(buf, "%5s %d", comando, &porta);
+
+                    // So di aspettarmi un comando di max 5 caratteri e un intero su 16 bit
+                    ret = sscanf(buf, "%5s %hu", comando, &porta);
                     porta = htons(porta);
-                    if (!strcmp(comando, "start")) {
+
+                    if (ret == 2 && !strcmp(comando, "start")) {
                         // start <port>, inserisco nell'fd_set il descrittore per un nuovo server
+                        
                         printf("Avvio del server di gioco...\n");
+
+                        // Se server già acceso non fa nulla
                         if(acceso){
                             printf("Server già acceso sulla porta %d\n", ntohs(porta));
                             continue;
@@ -79,35 +91,40 @@ int main(){
                         }
 
                         // Resto in ascolto per giocatori che si vogliono connettere alla mia partita
-                        ret = listen(sd_game, 2);
+                        ret = listen(sd_game, 10);
                         if(ret == -1){
-                            perror("Errore");
-                            continue;
+                            perror("Errore nella listen del server");
+                            exit(1);
                         }
                         printf("Socket in ascolto, è possibile collegarsi alla porta %d per giocare.\n", ntohs(porta));
                         
+                        acceso = true; // setto il server come acceso per evitare di riaccenderlo.
                             
-                    } else if (!strcmp(comando, "stop")){
+                    } else if (ret == 1 && !strcmp(comando, "stop")){
                         // stop
-                        // metti roba, controlla se partite in corso
+                        // metti roba, controlla se partite in corso.
                         if(!client_connessi){
-                            printf("Arresto del server, speriamo di averti intrattenuto con la nostra Escape Room!\n");
+                            printf("Arresto del server, spero di averti intrattenuto con l' Escape Room!\n");
                             close(sd_game);
                             exit(0);
                         }
 
                     } else {
+                        // Il comando inserito nella console non è supportato.
                         printf("Comando inesistente.\n");
                         mostra_comandi_console();
-                    }             
-                }
-                if(i == sd_game){
+                    }
+                    printf("\n");
+
+                } else if(i == sd_game){
+                    // Richiesta di connessione.
                     len = sizeof(client_addr);
 
-                    // le richieste arrivano quando un nuovo giocatore vuole connettersi
-                    new_sd = accept(sd_game, (struct sockaddr*)&client_addr, &len);
+                    // Le richieste arrivano quando un nuovo giocatore vuole connettersi.
+                    new_sd = accept(sd_game, (struct sockaddr*)&client_addr, (socklen_t*)&len);
                     if(new_sd == -1){
-                        perror("Errore");
+                        perror("Errore nell'accept");
+                        close(new_sd);
                         continue;
                     }
                     printf("Connessione accettata sulla porta %d\n", ntohs(porta));
@@ -115,15 +132,56 @@ int main(){
                     /* tengo traccia dei client connessi, mi serve per il comando stop. */
                     client_connessi++;
 
+                    // Inserisco il nuovo socket nel set.
                     FD_SET(new_sd, &master);
                     if(new_sd > fd_max){
-                        fd_max = new_sd; // fd_max contiene ora il valore massimo dei descrittori di socket master
+                        fd_max = new_sd; // fd_max contiene ora il valore massimo dei descrittori di socket master.
                     }
                 }
                 else{
-                    // è una richiesta di un giocatore, identifico il comando
-                    recv
 
+                    // Un giocatore ha immesso un comando, lo identifico dato che è sempre su 5 caratteri.
+                    ret = recv(i, comando, sizeof(comando), 0);
+                    if(!ret){
+
+                        // Qua il server si aspettava un comando ma si è chiuso il client e ret == 0.
+                        // Lo tolgo correttamente dal set e chiudo il socket.
+                        printf("Socket del client chiuso, procedo a chiudere il socket %d.\n", i);
+                        close(i);
+                        FD_CLR(i, &master);
+                        client_connessi--;
+                        printf("Socket %d chiuso, continuo...\n", i);
+                        continue;
+                        
+                    }
+                    if(ret == -1){
+                        // Nel caso in cui fallisca la recv.
+                        perror("Errore in fase di ricezione da un client");
+                        continue;
+                    }
+
+                    // Comando login del client.
+                    if(!strcmp(comando, "login")){
+
+                        // Salvo l'ID dell'account in un array di ID.
+                        id[i] = comando_login(i, &lista_account);
+
+                        // Se è già online chiudo la connessione.
+                        // Lo tolgo correttamente dal set e chiudo il socket.
+                        if(id[i] = -1){
+                            printf("Client già online, procedo a chiudere il socket %d.\n", i);
+                            strcpy(dati, "2");
+                            send(i, dati, sizeof(dati), 0);
+                            close(i);
+                            FD_CLR(i, &master);
+                            client_connessi--;
+                            printf("Socket %d chiuso, continuo...\n", i);
+                        }
+                    }
+                    // Comando per decidere lo scenario
+                    if(!strcmp(comando, "scene")){
+                        comando_scene();
+                    }
                 }
             }
         }

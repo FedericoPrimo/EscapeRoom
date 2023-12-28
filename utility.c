@@ -18,7 +18,7 @@ int creazione_sock_server(struct sockaddr_in *my_addr, int porta){
     // Creazione socket
     sd = socket(AF_INET, SOCK_STREAM, 0);
     if(sd == -1){
-        perror("Errore");
+        perror("Errore nella creazione del socket");
         exit(1);
     }
     printf("Socket creato\n");
@@ -32,7 +32,7 @@ int creazione_sock_server(struct sockaddr_in *my_addr, int porta){
 
     ret = bind(sd, (struct sockaddr*)my_addr, sizeof(*my_addr));
     if(ret == -1){
-        perror("Errore");
+        perror("Errore nella bind");
         exit(1);
     }
     printf("Assegnato indirizzo e porta al socket\n");
@@ -47,7 +47,7 @@ int creazione_indirizzo_server(struct sockaddr_in *server_addr, int porta){
     // Creazione socket
     sd = socket(AF_INET, SOCK_STREAM, 0);
     if(sd == -1){
-        perror("Errore");
+        perror("Errore socket non creato");
         exit(1);
     }
     printf("Socket creato\n");
@@ -62,15 +62,10 @@ int creazione_indirizzo_server(struct sockaddr_in *server_addr, int porta){
     return sd;
 }
 
-int manda_informazioni(unsigned char *email, unsigned char *passw){
-    char buf[256];
-    char comando[6];
-    strcpy(&comando, "login");
-    int ret;
-
-    // serializzo il comando
-    buffer
-
-    sprintf(buf, "%30s %20s", email, passw);
-    return ret;
+void mostra_possibili_scenari(){
+    printf("\n************************** ESCAPE ROOM *******************************\n\n");
+    printf("Seleziona uno scenario:\n\n");
+    printf("1)  Teatro\n");
+    printf("2)  Polo F\n");
+    printf("************************************************************************\n\n");
 }
