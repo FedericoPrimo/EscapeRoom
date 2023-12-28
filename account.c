@@ -1,6 +1,8 @@
 #include "account.h"
 #include "tuttigli.h"
 
+unsigned static int contatore = 0; // Usato per l'id
+
 /* Funzione che alloca dinamicamente una struct Account e e ritorna
 il puntatore a tale struttura */
 struct Account* new_account(char* email, char* passw){
@@ -54,7 +56,7 @@ void ins_account(struct Account** lista, struct Account* account){
 
 /* Data una lista di strutture ACCOUNT, controlla se è
  presente un account specifico dati email e password, se non trova nulla ritorna NULL*/
-struct Account* check_account(struct Account** lista, unsigned char *email, unsigned char *password){
+struct Account* check_account(struct Account** lista, char *email, char *password){
     if(*lista == NULL){
         printf("Account non presente nella lista.\n");
         return NULL;

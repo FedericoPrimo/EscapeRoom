@@ -20,7 +20,7 @@ struct in_addr {
 */
 
 int main(int argc, char* argv[]){
-    int ret, sd;
+    int ret, sd, room;
     int i;
     uint16_t porta;
     char buf[256], comando[6], email[30], passw[20];
@@ -59,7 +59,7 @@ int main(int argc, char* argv[]){
     scanf("%19s", passw);
 
     // Mando email e password in formato binary
-    ret = manda_informazioni(sd, &email, &passw);
+    ret = manda_informazioni(sd, email, passw);
     if(ret == -1){
         perror("Errore");
         exit(1);
@@ -81,27 +81,32 @@ int main(int argc, char* argv[]){
         return 0;
     }
 
-    // Ora devo comunicare al server quale scenario ho scelto.
+    int c;
+    while ((c = getchar()) != '\n' && c != EOF);
+    
+    // Ora devo far scegliere la room all'utente.
     mostra_possibili_scenari();
+    
+    // gestione input
     while(1){
-        // Mi serve uno scenario valido
-        scanf("%d", i);
-        if(i == 1 || i == 2){
-            printf("Numero non valido\n");
+        scanf("%5s %d", comando, &room);
+        if(!strcmp(comando, "start") && (room == 1 || room == 2))
             break;
-        }
+
+        printf("Comando non valido, prova con\n\n\t start <room>\n\n");
+
     }
+    printf("Hai selezionato la stanza %d\n", room);
 
     // Mando il comando
-    strcpy(comando, "scene");
+    strcpy(comando, "rooms");
     ret = send(sd, comando, sizeof(comando), 0);
     if(ret == -1){
         perror("Errore nell'invio dello scenario");
         exit(1);
     }
     // Mando il numero dello scenario
-    sprintf(buf, "%d", i);
-    ret = send(sd, buf, sizeof(buf), 0);
+    ret = send(sd, &room, sizeof(room), 0);
     if(ret == -1){
         perror("Errore nell'invio dello scenario");
         exit(1);

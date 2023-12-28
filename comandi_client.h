@@ -3,6 +3,6 @@
 #include "tuttigli.h"
 
 // identificazione
-int manda_informazioni(int sd, unsigned char *email, unsigned char *passw);
+int manda_informazioni(int sd, char *email, char *passw);
 
 #endif

@@ -8,7 +8,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
-#include "utility.h"
+#include "tuttigli.h"
 
 /*
 struct sockaddr_in {
@@ -31,8 +31,14 @@ int main(){
     fd_set master;
     uint16_t porta;
     char dati[2];
+
+    // inizializzazione strutture dati
     struct Account* lista_account = NULL;
-    
+    struct Sessione* lista_sessioni[NUM_STANZE];
+    for (int i = 0; i < NUM_STANZE; i++) {
+        lista_sessioni[i] = NULL;
+    }
+    struct Room* lista_rooms = NULL;
     struct sockaddr_in my_addr, client_addr;
     
     // Inizializza il set di file descriptor
@@ -168,7 +174,7 @@ int main(){
 
                         // Se è già online chiudo la connessione.
                         // Lo tolgo correttamente dal set e chiudo il socket.
-                        if(id[i] = -1){
+                        if(id[i] == -1){
                             printf("Client già online, procedo a chiudere il socket %d.\n", i);
                             strcpy(dati, "2");
                             send(i, dati, sizeof(dati), 0);
@@ -179,8 +185,8 @@ int main(){
                         }
                     }
                     // Comando per decidere lo scenario
-                    if(!strcmp(comando, "scene")){
-                        comando_scene();
+                    if(!strcmp(comando, "rooms")){
+                        comando_rooms();
                     }
                 }
             }

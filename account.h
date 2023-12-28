@@ -13,10 +13,9 @@ struct Account{
     struct Account* next;
 };
 
-unsigned static int contatore = 0; // Usato per 
 struct Account* new_account();
 void del_account(struct Account**, struct Account*);
 void ins_account(struct Account**, struct Account*);
-struct Account* check_account(struct Account**, unsigned char*, unsigned char*);
+struct Account* check_account(struct Account**, char*, char*);
 
 #endif

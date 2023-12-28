@@ -3,6 +3,6 @@
 #include "tuttigli.h"
 
 int comando_login(int sd, struct Account** lista);
-void comando_scene();
+void comando_rooms();
 
 #endif

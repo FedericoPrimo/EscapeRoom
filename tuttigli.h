@@ -15,6 +15,7 @@
 #include "comandi_server.h"
 #include "comandi_client.h"
 #include "sessione.h"
+#include "room.h"
 
 // Serve per non avere tutti gli #include all'inizio del file
 

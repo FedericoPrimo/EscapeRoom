@@ -1,7 +1,7 @@
 #include "tuttigli.h"
 
 /* Conversione di email e password*/
-int manda_informazioni(int sd, unsigned char *email, unsigned char *passw){
+int manda_informazioni(int sd, char *email, char *passw){
     char buf[256];
     char comando[6];
     strcpy(comando, "login");

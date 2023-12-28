@@ -24,7 +24,7 @@ int comando_login(int sd, struct Account **lista){
     }
     printf("Password ricevuta\n");
     strncpy(passw, buf, 20);
-    struct Account *temp = check_account(lista, &email, &passw);
+    struct Account *temp = check_account(lista, email, passw);
 
     //Controllo se è presente l'account
     if(temp != NULL){
@@ -59,7 +59,7 @@ int comando_login(int sd, struct Account **lista){
     return temp->id;
 }
 
-/* Si occupa di gestire il comando "scene" del client*/
-void comando_scene(){
+/* Si occupa di gestire il comando "room" del client*/
+void comando_rooms(){
     
 }

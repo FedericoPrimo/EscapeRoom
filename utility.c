@@ -42,7 +42,7 @@ int creazione_sock_server(struct sockaddr_in *my_addr, int porta){
 /* Racchiude socket(), la porta deve essere fornita in formato network.
 Restituisce il socket*/
 int creazione_indirizzo_server(struct sockaddr_in *server_addr, int porta){
-    int sd, ret;
+    int sd;
 
     // Creazione socket
     sd = socket(AF_INET, SOCK_STREAM, 0);
@@ -64,7 +64,7 @@ int creazione_indirizzo_server(struct sockaddr_in *server_addr, int porta){
 
 void mostra_possibili_scenari(){
     printf("\n************************** ESCAPE ROOM *******************************\n\n");
-    printf("Seleziona uno scenario:\n\n");
+    printf("Seleziona uno scenario con il comando 'start <room>'\n\n");
     printf("1)  Teatro\n");
     printf("2)  Polo F\n");
     printf("************************************************************************\n\n");
