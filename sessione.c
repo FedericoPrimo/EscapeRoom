@@ -4,9 +4,14 @@
 il puntatore a tale struttura */
 struct Sessione* new_sessione(int id, int room){
     struct Sessione* save_ptr = malloc(sizeof(struct Sessione));
-    save_ptr->id = id;
-    save_ptr->room = room;
-    memset(save_ptr->token, 0, sizeof(save_ptr->token));
+    save_ptr->id_account = id;
+    if(room == 1){
+        save_ptr->teatro.teatro1 = new_teatro1();
+    } else {
+        save_ptr->teatro.teatro2 = NULL;
+    }
+    save_ptr->token = 0;
+    memcpy(save_ptr->flags, 0, sizeof(save_ptr->flags));
     return save_ptr;
 }
 
@@ -20,7 +25,7 @@ struct Sessione* check_sessione(struct Sessione** lista, int id){
 
     // Cerca la sessione nella lista
     while(corrente != NULL){
-        if(corrente->id == id){
+        if(corrente->id_account == id){
             printf("Sessione di %d trovata", id);
             return corrente;
         }
@@ -46,7 +51,7 @@ void ins_sessione(struct Sessione** lista, struct Sessione* sessione){
 }
 
 /* Toglie SESSIONE dalla lista e libera la memoria occupata da una struttura sessione*/
-void del_sessione(struct Sessione** lista, struct Sessione* sessione){
+void del_sessione(struct Sessione** lista, struct Sessione* sessione, int type){
 
     struct Sessione* corrente = *lista;
     struct Sessione* precedente = NULL;
@@ -67,7 +72,14 @@ void del_sessione(struct Sessione** lista, struct Sessione* sessione){
         }
 
         // Libera la memoria della sessione rimossa
+        if(type == 1){
+            dealloca_teatro1(corrente->teatro.teatro1);
+        } else {
+            dealloca_teatro1(corrente->teatro.teatro2);
+        }
+
         free(corrente);
+        printf("Sessione deallocata correttamente\n");
     } else {
         printf("Sessione non trovata nella lista.\n");
     }

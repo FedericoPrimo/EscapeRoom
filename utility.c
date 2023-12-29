@@ -66,6 +66,6 @@ void mostra_possibili_scenari(){
     printf("\n************************** ESCAPE ROOM *******************************\n\n");
     printf("Seleziona uno scenario con il comando 'start <room>'\n\n");
     printf("1)  Teatro\n");
-    printf("2)  Polo F\n");
+    printf("2)  Mini teatro (Trailer)\n");
     printf("************************************************************************\n\n");
 }

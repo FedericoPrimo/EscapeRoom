@@ -24,12 +24,13 @@ struct in_addr {
 
 int main(){
     int sd_game, new_sd, ret, len, fd_max = 0, i, client_connessi = 0;
-    int id[20]; //array contenente gli id dell'account dei client
+    int id[2]; //array contenente gli id dell'account dei client
     char buf[20], comando[6];
     bool acceso = 0;
     fd_set read_fs;
     fd_set master;
     uint16_t porta;
+    uint8_t room;
     char dati[2];
 
     // inizializzazione strutture dati
@@ -38,7 +39,6 @@ int main(){
     for (int i = 0; i < NUM_STANZE; i++) {
         lista_sessioni[i] = NULL;
     }
-    struct Room* lista_rooms = NULL;
     struct sockaddr_in my_addr, client_addr;
     
     // Inizializza il set di file descriptor
@@ -97,7 +97,7 @@ int main(){
                         }
 
                         // Resto in ascolto per giocatori che si vogliono connettere alla mia partita
-                        ret = listen(sd_game, 10);
+                        ret = listen(sd_game, 2);
                         if(ret == -1){
                             perror("Errore nella listen del server");
                             exit(1);
@@ -186,7 +186,14 @@ int main(){
                     }
                     // Comando per decidere lo scenario
                     if(!strcmp(comando, "rooms")){
-                        comando_rooms();
+                        ret = recv(i, (void *)&room, sizeof(uint8_t), 0);
+                        if(ret == -1){
+                            perror("Errore nella ricezione della stanza nella comando_rooms");
+                            exit(1);
+                        } 
+
+                        // A seconda dello scenario scelto leggo metto nella lista corretta
+                        comando_rooms(room, id[i], &lista_sessioni[room-1]);
                     }
                 }
             }

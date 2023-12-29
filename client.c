@@ -20,7 +20,8 @@ struct in_addr {
 */
 
 int main(int argc, char* argv[]){
-    int ret, sd, room;
+    int ret, sd;
+    uint8_t room;
     int i;
     uint16_t porta;
     char buf[256], comando[6], email[30], passw[20];
@@ -89,7 +90,7 @@ int main(int argc, char* argv[]){
     
     // gestione input
     while(1){
-        scanf("%5s %d", comando, &room);
+        scanf("%5s %c", comando, &room);
         if(!strcmp(comando, "start") && (room == 1 || room == 2))
             break;
 
@@ -105,12 +106,21 @@ int main(int argc, char* argv[]){
         perror("Errore nell'invio dello scenario");
         exit(1);
     }
+
     // Mando il numero dello scenario
-    ret = send(sd, &room, sizeof(room), 0);
+    ret = send(sd, (void*)&room, sizeof(room), 0);
     if(ret == -1){
         perror("Errore nell'invio dello scenario");
         exit(1);
     }
+
+    if(room == 1){
+        mostra_scenario_1();
+    } else {
+        mostra_scenario_2();
+    }
+
+    // Inizia gioco
     while(1){
         
 

@@ -59,7 +59,20 @@ int comando_login(int sd, struct Account **lista){
     return temp->id;
 }
 
-/* Si occupa di gestire il comando "room" del client*/
-void comando_rooms(){
-    
+/* Si occupa di gestire il comando "room" del client */
+void comando_rooms(uint8_t room, int id, struct Sessione **lista){
+    // Ora devo gestire le sessioni, iniziarne una o recuperarla,
+    // devo metterla se creata nella giusta lista.
+        
+    // Qua controllo se è già presente nella lista
+    struct Sessione* temp = check_sessione(lista, id);
+
+    // Altrimenti la creo e la inserisco
+    if(temp == NULL){
+        temp = new_sessione(id, room);
+        ins_sessione(lista, temp);
+    }
+
+    // Da qui in poi il server si aspetta di ricevere solo comandi di gioco
+
 }
