@@ -2,7 +2,8 @@
 #define ACCOUNT_H
 #define online 1
 #define offline 0
-#include <stdbool.h>
+#include "tuttigli.h"
+
 
 /* Account con login basilare costituito da email e password, organizzati in lista non ordinata */
 struct Account{
@@ -13,9 +14,11 @@ struct Account{
     struct Account* next;
 };
 
+
 struct Account* new_account();
 void del_account(struct Account**, struct Account*);
 void ins_account(struct Account**, struct Account*);
 struct Account* check_account(struct Account**, char*, char*);
+void offline_account_by_id(struct Account **lista, int id);
 
 #endif

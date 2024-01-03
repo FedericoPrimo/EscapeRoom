@@ -3,13 +3,16 @@
 CC = gcc
 CFLAGS = -Wall -c
 
-all: server client
+all: server client other
 
-server: server.o utility.o account.o comandi_server.o comandi_client.o sessione.o room.o
-	$(CC) -Wall utility.o server.o account.o comandi_client.o comandi_server.o sessione.o room.o -o server
+server: server.o utility.o account.o comandi_server.o comandi_client.o sessione.o
+	$(CC) -Wall utility.o account.o comandi_server.o comandi_client.o sessione.o server.o -o server
 
-client: client.o utility.o account.o comandi_client.o comandi_server.o sessione.o room.o
-	$(CC) -Wall client.o utility.o account.o comandi_client.o comandi_server.o sessione.o room.o -o client
+client: client.o utility.o account.o comandi_client.o comandi_server.o sessione.o
+	$(CC) -Wall utility.o account.o comandi_client.o comandi_server.o sessione.o client.o -o client
+
+other: client.o utility.o account.o comandi_client.o comandi_server.o sessione.o
+	$(CC) -Wall utility.o account.o comandi_client.o comandi_server.o sessione.o client.o -o other
 
 server.o: server.c
 	$(CC) $(CFLAGS) server.c -o server.o
@@ -32,13 +35,10 @@ comandi_client.o: comandi_client.c comandi_client.h
 sessione.o: sessione.c sessione.h
 	$(CC) $(CFLAGS) sessione.c -o sessione.o
 
-room.o: room.c room.h
-	$(CC) $(CFLAGS) room.c -o room.o
-
 clean:
 	rm *.o server client
 
 run: all
-	gnome-terminal --tab --title="Server Terminal" --command="bash -c './server; exec bash'" \
-                   --tab --title="Client Terminal" --command="bash -c './client 4242; exec bash'" \
-				   --tab --title="Client Terminal" --command="bash -c './client 4242; exec bash'"
+	gnome-terminal --tab --title="Server Terminal" --command="bash -c './server 4242; exec bash'" \
+                   --tab --title="Client Terminal" --command="bash -c './client 6000; exec bash'" \
+				   --tab --title="Other Terminal" --command="bash -c './other 6100; exec bash'"

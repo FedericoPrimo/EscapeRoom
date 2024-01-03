@@ -1,32 +1,28 @@
 #include "tuttigli.h"
+#include "sessione.h"
+
+// serve per gestire la sessione co-op
+int client_online = 0;
+
 
 /* Funzione che alloca dinamicamente una struct sessione e e ritorna
 il puntatore a tale struttura */
 struct Sessione* new_sessione(int id, int room){
     struct Sessione* save_ptr = malloc(sizeof(struct Sessione));
     save_ptr->id_account = id;
-    if(room == 1){
-        save_ptr->teatro.teatro1 = new_teatro1();
-    } else {
-        save_ptr->teatro.teatro2 = NULL;
-    }
     save_ptr->token = 0;
-    memcpy(save_ptr->flags, 0, sizeof(save_ptr->flags));
+    memset(save_ptr->flags, 0, sizeof(save_ptr->flags));
     return save_ptr;
 }
 
 /* Data una lista, controlla se è già presente una sessione per un dato ID */
-struct Sessione* check_sessione(struct Sessione** lista, int id){
-    if(*lista == NULL){
-        printf("Sessione non presente nella lista.\n");
-        return NULL;
-    }
-    struct Sessione* corrente = *lista;
+struct Sessione* check_sessione(struct Sessione* lista, uint8_t id){
+    struct Sessione* corrente = lista;
 
     // Cerca la sessione nella lista
     while(corrente != NULL){
         if(corrente->id_account == id){
-            printf("Sessione di %d trovata", id);
+            printf("Sessione di %d trovata\n", id);
             return corrente;
         }
         corrente = corrente->next;
@@ -69,13 +65,6 @@ void del_sessione(struct Sessione** lista, struct Sessione* sessione, int type){
             *lista = corrente->next;
         } else {
             precedente->next = corrente->next;
-        }
-
-        // Libera la memoria della sessione rimossa
-        if(type == 1){
-            dealloca_teatro1(corrente->teatro.teatro1);
-        } else {
-            dealloca_teatro1(corrente->teatro.teatro2);
         }
 
         free(corrente);

@@ -1,4 +1,5 @@
 #include "account.h"
+#include "sessione.h"
 #include "tuttigli.h"
 
 unsigned static int contatore = 0; // Usato per l'id
@@ -75,5 +76,21 @@ struct Account* check_account(struct Account** lista, char *email, char *passwor
     // Account non trovato nella lista
     printf("Account non trovato nella lista.\n");
     return NULL;
+
+}
+/* Mette l'account offline*/
+void offline_account_by_id(struct Account **lista, int id){
+    struct Account* corrente = *lista;
+
+
+    // Cerca l'account nella lista
+    while (corrente != NULL) {
+        if (corrente->id == id) {
+            corrente->status = offline;
+            printf("L'utente %d è andato offline\n", id);
+            client_online--;
+        }
+        corrente = corrente->next;
+    }
 
 }

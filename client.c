@@ -1,10 +1,5 @@
-#include <arpa/inet.h>
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <string.h>
-#include <stdio.h>
-#include <stdlib.h>
+#include "tuttigli.h"
+#include "comandi_client.h"
 #include "utility.h"
 
 /*
@@ -21,8 +16,8 @@ struct in_addr {
 
 int main(int argc, char* argv[]){
     int ret, sd;
-    uint8_t room;
-    int i;
+    uint8_t room = 0;
+    int i, c;
     uint16_t porta;
     char buf[256], comando[6], email[30], passw[20];
     struct sockaddr_in server_addr;
@@ -32,7 +27,7 @@ int main(int argc, char* argv[]){
         printf("Inserire correttamente la porta.\n\n\tSintassi: ./client <porta>\n\n");
         exit(1);
     }
-    porta = htons(atoi(argv[1]));
+    porta = htons(4242);
 
     // Creazione socket client
     sd = creazione_indirizzo_server(&server_addr, porta);
@@ -82,53 +77,67 @@ int main(int argc, char* argv[]){
         return 0;
     }
 
-    int c;
+    // Pulizia stdin perché può rimanere sporco
     while ((c = getchar()) != '\n' && c != EOF);
     
-    // Ora devo far scegliere la room all'utente.
-    mostra_possibili_scenari();
-    
-    // gestione input
-    while(1){
-        scanf("%5s %c", comando, &room);
-        if(!strcmp(comando, "start") && (room == 1 || room == 2))
-            break;
-
-        printf("Comando non valido, prova con\n\n\t start <room>\n\n");
-
-    }
-    printf("Hai selezionato la stanza %d\n", room);
-
-    // Mando il comando
-    strcpy(comando, "rooms");
-    ret = send(sd, comando, sizeof(comando), 0);
+    // Aspetto di sapere se mi sto unendo ad una sessione o la sto creando
+    ret = recv(sd, (void *)&room, sizeof(room), 0);
     if(ret == -1){
-        perror("Errore nell'invio dello scenario");
+        perror("Errore nella ricezione della sessione");
         exit(1);
     }
 
-    // Mando il numero dello scenario
-    ret = send(sd, (void*)&room, sizeof(room), 0);
-    if(ret == -1){
-        perror("Errore nell'invio dello scenario");
-        exit(1);
-    }
+    if(!room){
 
-    if(room == 1){
-        mostra_scenario_1();
-    } else {
-        mostra_scenario_2();
+        // Ora devo far scegliere la room all'utente.
+        mostra_possibili_scenari();
+        
+        // gestione input
+        while(1){
+
+            // stringa e naturale su 8 bit
+            fgets(buf, sizeof(buf), stdin);
+            sscanf(buf, "%5s %hhu", comando, &room);
+            if(!strcmp(comando, "start") && (room == 1 || room == 2))
+                break;
+
+            printf("Comando non valido, prova con\n\n\t start <room>\n\n");
+
+        }
+        printf("Hai selezionato la stanza %d\n", room);
+
+        // Mando il comando
+        strcpy(comando, "rooms");
+        ret = send(sd, comando, sizeof(comando), 0);
+        if(ret == -1){
+            perror("Errore nell'invio dello scenario");
+            exit(1);
+        }
+
+        // Mando il numero dello scenario
+        ret = send(sd, (void*)&room, sizeof(room), 0);
+        if(ret == -1){
+            perror("Errore nell'invio dello scenario");
+            exit(1);
+        }
+
+        printf("Hai selezionato la la stanza numero %hhu\n", room);
     }
 
     // Inizia gioco
-    while(1){
-        
-
-
-
-        printf("\nFine del main\n");
-        sleep(5);
+    // A seconda dello scenario scelto devo gestire la partita in maniera diversa
+    if(room == 1){
+        // Schermata di benvenuto
+        inizio_gioco1();
+        gestione_partita1(sd);
+    } else {
+        // Schermata di benvenuto
+        inizio_gioco2();
+        gestione_partita2(sd);
     }
+
+    // Il client esegue questo codice in seguito al comando "end"
+    // Devo mostrare le informazioni e chiudere la connessione
     close(sd); 
     exit(0);
 }

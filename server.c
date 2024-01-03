@@ -1,14 +1,9 @@
-#include <arpa/inet.h>
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <sys/select.h>
-#include <string.h>
-#include <unistd.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <stdbool.h>
+
 #include "tuttigli.h"
+#include "comandi_server.h"
+#include "utility.h"
+#include "sessione.h"
+#include "account.h"
 
 /*
 struct sockaddr_in {
@@ -22,8 +17,9 @@ struct in_addr {
 };
 */
 
+
 int main(){
-    int sd_game, new_sd, ret, len, fd_max = 0, i, client_connessi = 0;
+    int sd_game, new_sd, ret, len, fd_max = 0, i, j, client_connessi = 0;
     int id[2]; //array contenente gli id dell'account dei client
     char buf[20], comando[6];
     bool acceso = 0;
@@ -32,14 +28,18 @@ int main(){
     uint16_t porta;
     uint8_t room;
     char dati[2];
+    struct sockaddr_in my_addr, client_addr;
 
     // inizializzazione strutture dati
     struct Account* lista_account = NULL;
-    struct Sessione* lista_sessioni[NUM_STANZE];
-    for (int i = 0; i < NUM_STANZE; i++) {
+    struct Sessione* lista_sessioni[2];
+    for (i = 0; i < 2; i++) {
         lista_sessioni[i] = NULL;
     }
-    struct sockaddr_in my_addr, client_addr;
+
+    // Strutture dati contenenti informazioni sulla partita in corso
+    uint8_t dove_giocano;
+    struct Sessione *sess_cur = NULL;
     
     // Inizializza il set di file descriptor
     FD_ZERO(&master);
@@ -108,12 +108,38 @@ int main(){
                             
                     } else if (ret == 1 && !strcmp(comando, "stop")){
                         // stop
-                        // metti roba, controlla se partite in corso.
+
                         if(!client_connessi){
-                            printf("Arresto del server, spero di averti intrattenuto con l' Escape Room!\n");
                             close(sd_game);
-                            exit(0);
+                            printf("Arresto del server, spero di averti intrattenuto con l' Escape Room!\n");
+                            continue;
                         }
+
+                        // controlla se ci sono client connessi
+                        for(j = 1; j <= fd_max; j++){
+                            if(FD_ISSET(j, &master)){
+                                FD_CLR(j, &master);
+                                close(j);
+                                offline_account_by_id(&lista_account, id[i]);
+                                client_connessi--;
+                                printf("Chiuso il socket %d\n", j);
+
+                                // Qua ho il comando end oppure è chiuso il client e ret == 0.
+                                // Lo tolgo correttamente dal set e chiudo il socket.
+                                printf("Socket del client chiuso, procedo a chiudere il socket %d.\n", i);
+                                
+                                
+                                printf("Socket %d chiuso, continuo...\n", i);
+                                continue;
+                            }
+                        }
+                        
+                        printf("Arresto del server, spero di averti intrattenuto con l' Escape Room!\n");
+                        
+                        if(!client_connessi){
+                            close(sd_game);
+                        }
+
 
                     } else {
                         // Il comando inserito nella console non è supportato.
@@ -150,11 +176,12 @@ int main(){
                     ret = recv(i, comando, sizeof(comando), 0);
                     if(!ret){
 
-                        // Qua il server si aspettava un comando ma si è chiuso il client e ret == 0.
+                        // Qua ho il comando end oppure è chiuso il client e ret == 0.
                         // Lo tolgo correttamente dal set e chiudo il socket.
                         printf("Socket del client chiuso, procedo a chiudere il socket %d.\n", i);
                         close(i);
                         FD_CLR(i, &master);
+                        offline_account_by_id(&lista_account, id[i]);
                         client_connessi--;
                         printf("Socket %d chiuso, continuo...\n", i);
                         continue;
@@ -181,8 +208,25 @@ int main(){
                             close(i);
                             FD_CLR(i, &master);
                             client_connessi--;
+                            client_online--;
                             printf("Socket %d chiuso, continuo...\n", i);
                         }
+
+                        // Mando un messaggio al client per avvisarlo se è la sessione è sua o si sta unendo a un'altra
+                        // Se mando 0 deve sceglierla, altrimenti è quella già esistente
+                        if(!client_online){
+                            room = client_online;
+                        }
+                        else{
+                            room = dove_giocano;
+                        }
+                        
+                        ret = send(i, (void *)&room, sizeof(room), 0);
+                        if(ret == -1){
+                            perror("Errore nella send della room al secondo client");
+                            exit(1);
+                        }
+                        
                     }
                     // Comando per decidere lo scenario
                     if(!strcmp(comando, "rooms")){
@@ -190,10 +234,57 @@ int main(){
                         if(ret == -1){
                             perror("Errore nella ricezione della stanza nella comando_rooms");
                             exit(1);
-                        } 
+                        }
+
+                        // lo salvo in dove_giocano
+                        dove_giocano = room;
 
                         // A seconda dello scenario scelto leggo metto nella lista corretta
-                        comando_rooms(room, id[i], &lista_sessioni[room-1]);
+                        comando_rooms(room, id[i], &lista_sessioni[dove_giocano-1]);
+                        sess_cur = check_sessione(lista_sessioni[dove_giocano-1], id[i]);
+                    }
+                    if(!strcmp(comando, "look")){
+
+                        // NOTA: il server gestisce solamente le look con un argomento
+                        comando_look(i, sess_cur, dove_giocano);
+
+                        // Devo controllare se ha vinto e nel caso toglierlo dalle sessioni
+                        ret = check_vittoria(i, sess_cur);
+                        if(ret == 1){
+                            del_sessione(&lista_sessioni[dove_giocano-1], sess_cur, dove_giocano);
+                        }
+                    }
+                    if(!strcmp(comando, "take")){
+
+                        // 
+                        comando_take(i, sess_cur, dove_giocano);
+
+                        // Devo controllare se ha vinto e nel caso toglierlo dalle sessioni
+                        ret = check_vittoria(i, sess_cur);
+                        if(ret == 1){
+                            del_sessione(&lista_sessioni[dove_giocano-1], sess_cur, dove_giocano);
+                        }
+                    }
+                    if(!strcmp(comando, "use")){
+                        
+                        //
+                        comando_use(i, sess_cur, dove_giocano);
+
+                        // Devo controllare se ha vinto e nel caso toglierlo dalle sessioni
+                        ret = check_vittoria(i, sess_cur);
+                        if(ret == 1){
+                            del_sessione(&lista_sessioni[dove_giocano-1], sess_cur, dove_giocano);
+                        }
+                    }
+                    if(!strcmp(comando, "objs")){
+
+                        comando_objs(i, sess_cur, dove_giocano);
+
+                        // Devo controllare se ha vinto e nel caso toglierlo dalle sessioni
+                        ret = check_vittoria(i, sess_cur);
+                        if(ret == 1){
+                            del_sessione(&lista_sessioni[dove_giocano-1], sess_cur, dove_giocano);
+                        }
                     }
                 }
             }

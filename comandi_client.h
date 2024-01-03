@@ -4,5 +4,7 @@
 
 // identificazione
 int manda_informazioni(int sd, char *email, char *passw);
+void gestione_partita1(int sd);
+void gestione_partita2(int sd);
 
 #endif
