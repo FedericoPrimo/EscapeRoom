@@ -27,7 +27,7 @@ int main(int argc, char* argv[]){
         printf("Inserire correttamente la porta.\n\n\tSintassi: ./client <porta>\n\n");
         exit(1);
     }
-    porta = htons(4242);
+    porta = htons(4243);
 
     // Creazione socket client
     sd = creazione_indirizzo_server(&server_addr, porta);
@@ -98,11 +98,14 @@ int main(int argc, char* argv[]){
             // stringa e naturale su 8 bit
             fgets(buf, sizeof(buf), stdin);
             sscanf(buf, "%5s %hhu", comando, &room);
-            if(!strcmp(comando, "start") && (room == 1 || room == 2))
+            if(!strcmp(comando, "start") && room == 1)
                 break;
-
+            if(!strcmp(comando, "start") && room == 2){
+                printf("Sii paziente, presto arriverà\n");
+                continue;
+            }
             printf("Comando non valido, prova con\n\n\t start <room>\n\n");
-
+            
         }
         printf("Hai selezionato la stanza %d\n", room);
 
@@ -131,9 +134,7 @@ int main(int argc, char* argv[]){
         inizio_gioco1();
         gestione_partita1(sd);
     } else {
-        // Schermata di benvenuto
-        inizio_gioco2();
-        gestione_partita2(sd);
+        // gestione per altre stanze
     }
 
     // Il client esegue questo codice in seguito al comando "end"

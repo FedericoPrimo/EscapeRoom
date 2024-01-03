@@ -114,19 +114,6 @@ void comando_look(int sd, struct Sessione* sessione, int type){
     }
     // In base al tipo di room gestisco gli scenari
     if(type == 1){
-        if(!strcmp(buf, "balcone")){
-
-        } else if(!strcmp(buf, "palco")){
-
-        } else if(!strcmp(buf, "tribuna")){
-
-        } else if(!strcmp(buf, "tende")){
-
-        } else {
-
-        }
-
-    } else if(type == 2){
         // Si guardano anche i flag per cambiare la frase stampata al client
         if(!strcmp(buf, "balcone")){
 
@@ -141,7 +128,9 @@ void comando_look(int sd, struct Sessione* sessione, int type){
         } else if(!strcmp(buf, "giulietta")){
             if(!sessione->flags[0])
                 strcpy(buf, "Giulietta è rivolta verso il palco ma non sai dove stia guardando perché le manca la testa");
-            else
+            else if(sessione->flags[2] && !sessione->flags[4]){
+                strcpy(buf, "All'interno vedi la testa di un manichino");
+            } else
                 strcpy(buf, "Giulietta sta guardando il manichino di Romeo");
 
         } else if(!strcmp(buf, "palco")){
@@ -151,8 +140,11 @@ void comando_look(int sd, struct Sessione* sessione, int type){
         } else if(!strcmp(buf, "vetrina")){
             if(!sessione->flags[3])
                 strcpy(buf, "Vedi una vetrina con una testa di un manichino al suo interno ma è chiusa");
-            else
+            else if(sessione->flags[3] && !sessione->flags[5]){
+                strcpy(buf, "All'interno vedi la testa di un manichino");
+            } else 
                 strcpy(buf, "Hai già raccolto la testa del manichino");
+            
 
         } else if(!strcmp(buf, "romeo")){
             if(!sessione->flags[1])
@@ -170,6 +162,8 @@ void comando_look(int sd, struct Sessione* sessione, int type){
             perror("Errore nell'invio dell'esito");
             exit(1);
         }
+    } else {
+        // Qua posso gestire gli scenari futuri
     }
 }
 
@@ -179,18 +173,16 @@ void comando_objs(int sd, struct Sessione* sessione, int type){
     // A seconda dello scenario devo gestire diversamente il comando
 
     if(type == 1){
-
-    } else {
-        // Tipo 2
-
         // Controllo il flag associato alla sessione
         if(sessione->flags[4] == 1){
-            strcat(buf, "testa\n");
+            strcat(buf, "braccio\n");
         }
         // Controllo il flag associato alla sessione
         if(sessione->flags[5] == 1){
-            strcat(buf, "braccio\n");
+            strcat(buf, "testa\n");
         }
+    } else {
+        // Coming soon...
     }
 
     // Mando tutto al client per la stampa
@@ -214,8 +206,6 @@ void comando_take(int sd, struct Sessione* sessione, int type){
     }
 
     if(type == 1){
-        
-    } else {
 
         // Nella stanza numero due possiamo usare la take solamente sul baule e sulla vetrina
         // Gli indovinelli non hanno un limite di tentativi
@@ -238,23 +228,17 @@ void comando_take(int sd, struct Sessione* sessione, int type){
                     perror("Errore nella recv della risposta all'enigma del baule");
                     exit(1);
                 }
-                printf("Risposta: %s", risposta);
-
+                
                 // Controllo la risposta e se giusta setto il flag
-                if(!strcmp(risposta, "venezia\n")){
+                if(!strcmp(risposta, "verona\n")){
                     strcpy(buf, "Il lucchetto si è aperto e dentro vedi un braccio di un manichino\n");
                     sessione->flags[2] = 1;
                 } else {
                     strcpy(buf, "Il lucchetto non si apre\n");
                 }
 
-                // Mandiamo l'esito dell'indovinello con la send finale
-                ret = send(sd, buf, sizeof(buf), 0);
-                if(ret == -1){
-                    perror("Errore nella send dell'esito risposta all'enigma del baule");
-                    exit(1);
-                }
-                printf("mandato\n");
+                // Mandiamo l'esito dell'indovinello con la send finale (quella in fondo al ciclo)
+                
 
             } else if(sessione->flags[2] && !sessione->flags[4]){
                 // baule aperto e braccio non possesso
@@ -266,10 +250,50 @@ void comando_take(int sd, struct Sessione* sessione, int type){
             }
 
         } else if(!strcmp("vetrina", arg1)){
-            
+
+            // Controllo i flag per gestire i vari casi
+            if(!sessione->flags[3]){
+                // La vetrina è chiusa
+                // Devo mostrare l'enigma (flag 3 == 0)
+                strcpy(buf, "La vetrina è chiusa. Devi risolvere l'enigma!\nCompleta la frase...\nQual è la bevanda che ha causato la tragica fine di Romeo e Giulietta?\n");
+
+                ret = send(sd, buf, sizeof(buf), 0);
+                if(ret == -1){
+                    perror("Errore nella send dell'enigma della vetrina");
+                    exit(1);
+                }
+
+                // Ci aspettiamo la risposta giusta che è giulietta
+                ret = recv(sd, risposta, sizeof(risposta), 0);
+                if(ret == -1){
+                    perror("Errore nella recv della risposta all'enigma della vetrina");
+                    exit(1);
+                }
+
+                // Controllo la risposta e se giusta setto il flag
+                if(!strcmp(risposta, "veleno\n")){
+                    strcpy(buf, "Il lucchetto si è aperto e dentro e puoi prendere la testa del manichino\n");
+                    sessione->flags[3] = 1;
+                } else {
+                    strcpy(buf, "Non è successo niente\n");
+                }
+
+                // Mandiamo l'esito dell'indovinello con la send finale (quella in fondo al ciclo)
+                
+
+            } else if(sessione->flags[3] && !sessione->flags[5]){
+                // La vetrina è aperta ma non ho ancora preso l'oggetto
+                strcpy(buf, "Hai preso la testa\n");
+                sessione->flags[5] = 1;
+            } else{
+                // Vetrina aperta e ho già preso l'oggetto
+                strcpy(buf, "La vetrina è vuota");
+            }
         } else {
             strcpy(buf, "Argomento non valido\n");
         }
+    } else {
+        // Coming soon...
     }
 
     // Mando la stringa contenente l'esito della take
@@ -281,12 +305,67 @@ void comando_take(int sd, struct Sessione* sessione, int type){
 }
 
 void comando_use(int sd, struct Sessione* sessione, int type){
-    char buf[256] = "";
+    char buf[256], arg[10];
     int ret;
 
     if(type == 1){
 
+        // Mi aspetto uno degli argomenti della use dato che:
+        // - Non sono presenti use con un singolo argomento
+        // - I controlli sui parametri sono gestiti lato client
+        ret = recv(sd, arg, sizeof(arg), 0);
+        if(ret == 1){
+            perror("Errore nella recv del primo argomento della use");
+            exit(1);
+        }
+        printf("%s\n", arg);
+
+        // Devo guardare quale tra i due casi mi è stato mandato
+        // E successivamente devo guardare i flag per gestire il comando
+
+        if(!strcmp(arg, "romeo") || !strcmp(arg, "braccio")){
+            // Caso del baule di Romeo
+            if(sessione->flags[4]){
+                // Se ho la il braccio posso metterlo
+                strcpy(buf, "Il braccio si incastra perfettamente, hai guadagnato un token!\n");
+
+                // Devo rimuovere il braccio dall'inventario
+                // Devo settare il flag del manichino e dare un token ai player
+                sessione->flags[4] = 0;
+                sessione->flags[1] = 1;
+                sessione->token++;
+            } else{
+                // Non possiedo il braccio o lo ho già messo
+                strcpy(buf, "Non hai questi oggetti oppure non puoi usarli insieme\n");
+            }    
+
+        } else {
+            // L'unico altro caso è quello della testa di Giulietta
+
+            if(sessione->flags[5]){
+                // Se ho la testa posso metterla
+                strcpy(buf, "Hai messo la testa al suo posto, hai guadagnato un token!\n");
+
+                // Devo rimuovere la testa dall'inventario
+                // Devo settare il flag del manichino e dare un token ai player
+                sessione->flags[5] = 0;
+                sessione->flags[0] = 1;
+                sessione->token++;
+            } else{
+                // Non possiedo la testa o lo ho già messa
+                strcpy(buf, "Non hai questi oggetti oppure non puoi usarli insieme\n");
+            }
+        }
+
+        // Mando la stringa da stampare al client
+        ret = send(sd, buf, sizeof(buf), 0);
+        if(ret == -1){
+            perror("Errore nella send dell'esito della use");
+            exit(1);
+        }
+
+
     } else {
-        
+        // Coming soon...   
     }
 }

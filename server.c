@@ -19,9 +19,10 @@ struct in_addr {
 
 
 int main(){
-    int sd_game, new_sd, ret, len, fd_max = 0, i, j, client_connessi = 0;
+    int sd_game, new_sd; // Socket file descriptors
+    int ret, len, fd_max = 0, i, j, client_connessi = 0;
     int id[2]; //array contenente gli id dell'account dei client
-    char buf[20], comando[6];
+    char buf[256], comando[6]; //array usati per lo scambio di messaggi
     bool acceso = 0;
     fd_set read_fs;
     fd_set master;
@@ -283,8 +284,19 @@ int main(){
                         // Devo controllare se ha vinto e nel caso toglierlo dalle sessioni
                         ret = check_vittoria(i, sess_cur);
                         if(ret == 1){
-                            del_sessione(&lista_sessioni[dove_giocano-1], sess_cur, dove_giocano);
+                            // Sono gli ultimi due aggiunti, quindi sono ultimo e penultimo
+                            if(i == fd_max)
+                                close(i-1);
+                            else
+                                close(i+1);
+                            close(i);
+                            del_sessione(&lista_sessioni[dove_giocano-1], sess_cur, dove_giocano); // Partita finita
+                            close(sd_game);
+                            printf("Arresto del server, spero di averti intrattenuto con l' Escape Room!\n");
                         }
+                    }
+                    if(!strcmp(comando, "ping")){
+                        // Deve essere vuoto, serve al client per capire se il server è ancora online
                     }
                 }
             }

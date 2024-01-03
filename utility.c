@@ -69,7 +69,7 @@ void mostra_possibili_scenari(){
     printf("\n************************** ESCAPE ROOM *******************************\n\n");
     printf("Seleziona uno scenario con il comando 'start <room>'\n\n");
     printf("1)  Teatro\n");
-    printf("2)  Mini teatro (Trailer)\n");
+    printf("2)  Coming soon...\n");
     printf("************************************************************************\n\n");
 }
 
@@ -82,10 +82,3 @@ void inizio_gioco1(){
     printf("***************************************************************************\n\n");
 }
 /* */
-void inizio_gioco2(){
-    printf("\n****************************** TEATRO ***********************************\n");
-    printf("Benvenuto nell'escape room.\n");
-    printf("Hai 5m di tempo per uscire da questo teatro, ricostruisci la scena iconica\n");
-    printf("della tragedia di William Shakespeare\n");
-    printf("***************************************************************************\n\n");
-}

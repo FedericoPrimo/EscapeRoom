@@ -8,6 +8,5 @@ int creazione_sock_server(struct sockaddr_in *server_address, int porta);
 int creazione_indirizzo_server(struct sockaddr_in *server_addr, int porta);
 void mostra_possibili_scenari();
 void inizio_gioco1();
-void inizio_gioco2();
 
 #endif
