@@ -27,7 +27,7 @@ int main(){
     fd_set read_fs;
     fd_set master;
     uint16_t porta;
-    uint8_t room, ping_byte = 1;
+    uint8_t room;
     char dati[2];
     struct sockaddr_in my_addr, client_addr;
 

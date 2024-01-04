@@ -72,14 +72,14 @@ void gestione_partita1(int sd){
 
         // Controllo se è scaduto il tempo
         time(&cur_time);
-        tempo_trascorso = 4 - difftime(cur_time , start_time);
+        tempo_trascorso = 300 - difftime(cur_time , start_time);
         if(tempo_trascorso <= 0){
             printf("Tempo scaduto, hai perso!\n");
             break;
         }
 
         // Controllo se ci sono messaggi nella casella di posta
-        // Serve aqnche per capire se il server è stato chiuso
+        // Serve anche per capire se il server è stato chiuso
         ret = recv(sd, buf, sizeof(buf), MSG_DONTWAIT);
         if(ret == -1){
             if(errno == EWOULDBLOCK){
@@ -297,13 +297,13 @@ void gestione_partita1(int sd){
         }
 
         if(esito == 2){
-            printf("Complimenti hai vinto!!!\nAdesso puoi goderti lo spettacolo!");
+            printf("Complimenti hai vinto!!!\nAdesso puoi goderti lo spettacolo!\n");
             break;
         }
 
         time(&cur_time);
-        tempo_trascorso = 4 - difftime(cur_time , start_time);
-        printf("Tempo rimanente: %d secondi\t Token raccolti: %d\t Token rimasti: %d\t\n", tempo_trascorso, esito, 2-esito);
+        tempo_trascorso = 300 - difftime(cur_time , start_time);
+        printf("Tempo rimanente: %d secondi\t Token raccolti: %d\t Token rimasti: %d\t\n\n", tempo_trascorso, esito, 2-esito);
 
     }
 }

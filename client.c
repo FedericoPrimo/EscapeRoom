@@ -48,7 +48,7 @@ int main(int argc, char* argv[]){
     printf("Connessione Stabilita con porta: %d\n", ntohs(porta));
     
     // Connessione effettuata, inizia lo scambio di informazioni con il server
-    printf("Per favore identificati.\n");
+    printf("Per favore identificati.\nNOTA: Prima di loggarti assicurati che l'altro giocatore abbia scelto la mappa\n");
     printf("Email: ");
     scanf("%29s", email);
     printf("Password: ");

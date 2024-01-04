@@ -5,14 +5,14 @@ CFLAGS = -Wall -c
 
 all: server client other
 
-server: server.o utility.o account.o comandi_server.o comandi_client.o sessione.o
-	$(CC) -Wall utility.o account.o comandi_server.o comandi_client.o sessione.o server.o -o server
+server: server.o utility.o account.o comandi_server.o sessione.o
+	$(CC) -Wall utility.o account.o comandi_server.o sessione.o server.o -o server
 
-client: client.o utility.o account.o comandi_client.o comandi_server.o sessione.o
-	$(CC) -Wall utility.o account.o comandi_client.o comandi_server.o sessione.o client.o -o client
+client: client.o utility.o comandi_client.o
+	$(CC) -Wall utility.o comandi_client.o client.o -o client
 
-other: client.o utility.o account.o comandi_client.o comandi_server.o sessione.o
-	$(CC) -Wall utility.o account.o comandi_client.o comandi_server.o sessione.o client.o -o other
+other: client.o utility.o comandi_client.o
+	$(CC) -Wall utility.o comandi_client.o client.o -o other
 
 server.o: server.c
 	$(CC) $(CFLAGS) server.c -o server.o
