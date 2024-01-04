@@ -27,7 +27,7 @@ int main(){
     fd_set read_fs;
     fd_set master;
     uint16_t porta;
-    uint8_t room;
+    uint8_t room, ping_byte = 1;
     char dati[2];
     struct sockaddr_in my_addr, client_addr;
 
@@ -109,7 +109,7 @@ int main(){
                             
                     } else if (ret == 1 && !strcmp(comando, "stop")){
                         // stop
-
+                        
                         if(!client_connessi){
                             close(sd_game);
                             printf("Arresto del server, spero di averti intrattenuto con l' Escape Room!\n");
@@ -202,8 +202,8 @@ int main(){
 
                         // Se è già online chiudo la connessione.
                         // Lo tolgo correttamente dal set e chiudo il socket.
-                        if(id[i] == -1){
-                            printf("Client già online, procedo a chiudere il socket %d.\n", i);
+                        if(id[i] == -1 || id[i] == -2){
+                            printf("Client già online o password errata, procedo a chiudere il socket %d.\n", i);
                             strcpy(dati, "2");
                             send(i, dati, sizeof(dati), 0);
                             close(i);
@@ -211,6 +211,7 @@ int main(){
                             client_connessi--;
                             client_online--;
                             printf("Socket %d chiuso, continuo...\n", i);
+                            continue;
                         }
 
                         // Mando un messaggio al client per avvisarlo se è la sessione è sua o si sta unendo a un'altra
@@ -220,6 +221,7 @@ int main(){
                         }
                         else{
                             room = dove_giocano;
+                            client_online++;
                         }
                         
                         ret = send(i, (void *)&room, sizeof(room), 0);
@@ -243,16 +245,25 @@ int main(){
                         // A seconda dello scenario scelto leggo metto nella lista corretta
                         comando_rooms(room, id[i], &lista_sessioni[dove_giocano-1]);
                         sess_cur = check_sessione(lista_sessioni[dove_giocano-1], id[i]);
+
                     }
                     if(!strcmp(comando, "look")){
 
-                        // NOTA: il server gestisce solamente le look con un argomento
+                        // 
                         comando_look(i, sess_cur, dove_giocano);
 
                         // Devo controllare se ha vinto e nel caso toglierlo dalle sessioni
                         ret = check_vittoria(i, sess_cur);
                         if(ret == 1){
-                            del_sessione(&lista_sessioni[dove_giocano-1], sess_cur, dove_giocano);
+                            // Sono gli ultimi due aggiunti, quindi sono ultimo e penultimo
+                            if(i == fd_max)
+                                close(i-1);
+                            else
+                                close(i+1);
+                            close(i);
+                            del_sessione(&lista_sessioni[dove_giocano-1], sess_cur, dove_giocano); // Partita finita
+                            close(sd_game);
+                            printf("Arresto del server, spero di averti intrattenuto con l' Escape Room!\n");
                         }
                     }
                     if(!strcmp(comando, "take")){
@@ -263,7 +274,15 @@ int main(){
                         // Devo controllare se ha vinto e nel caso toglierlo dalle sessioni
                         ret = check_vittoria(i, sess_cur);
                         if(ret == 1){
-                            del_sessione(&lista_sessioni[dove_giocano-1], sess_cur, dove_giocano);
+                            // Sono gli ultimi due aggiunti, quindi sono ultimo e penultimo
+                            if(i == fd_max)
+                                close(i-1);
+                            else
+                                close(i+1);
+                            close(i);
+                            del_sessione(&lista_sessioni[dove_giocano-1], sess_cur, dove_giocano); // Partita finita
+                            close(sd_game);
+                            printf("Arresto del server, spero di averti intrattenuto con l' Escape Room!\n");
                         }
                     }
                     if(!strcmp(comando, "use")){
@@ -274,7 +293,15 @@ int main(){
                         // Devo controllare se ha vinto e nel caso toglierlo dalle sessioni
                         ret = check_vittoria(i, sess_cur);
                         if(ret == 1){
-                            del_sessione(&lista_sessioni[dove_giocano-1], sess_cur, dove_giocano);
+                            // Sono gli ultimi due aggiunti, quindi sono ultimo e penultimo
+                            if(i == fd_max)
+                                close(i-1);
+                            else
+                                close(i+1);
+                            close(i);
+                            del_sessione(&lista_sessioni[dove_giocano-1], sess_cur, dove_giocano); // Partita finita
+                            close(sd_game);
+                            printf("Arresto del server, spero di averti intrattenuto con l' Escape Room!\n");
                         }
                     }
                     if(!strcmp(comando, "objs")){
@@ -295,8 +322,39 @@ int main(){
                             printf("Arresto del server, spero di averti intrattenuto con l' Escape Room!\n");
                         }
                     }
-                    if(!strcmp(comando, "ping")){
-                        // Deve essere vuoto, serve al client per capire se il server è ancora online
+                    if(!strcmp(comando, "msg")){
+                        //Uno dei due client vuole comunicare con l'altro
+
+                        ret = recv(i, buf, sizeof(buf), 0);
+                        if(ret == -1){
+                            perror("Errore nella recv del messaggio");
+                            exit(1);
+                        }
+                        
+                        printf("\nInbox: %s\n\n", buf);
+
+                        // Se non hoi entrambi i giocatori online non mando niente
+                        if(client_online == 2){
+                            ret = send((i == fd_max ? i-1 : i+1), buf, sizeof(buf), 0);
+                            if(ret == -1){
+                                perror("Errore nella send del messaggio");
+                                exit(1);
+                            }
+                        }
+
+                        // Devo controllare se ha vinto e nel caso toglierlo dalle sessioni
+                        ret = check_vittoria(i, sess_cur);
+                        if(ret == 1){
+                            // Sono gli ultimi due aggiunti, quindi sono ultimo e penultimo
+                            if(i == fd_max)
+                                close(i-1);
+                            else
+                                close(i+1);
+                            close(i);
+                            del_sessione(&lista_sessioni[dove_giocano-1], sess_cur, dove_giocano); // Partita finita
+                            close(sd_game);
+                            printf("Arresto del server, spero di averti intrattenuto con l' Escape Room!\n");
+                        }
                     }
                 }
             }

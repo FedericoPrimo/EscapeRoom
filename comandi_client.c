@@ -37,20 +37,8 @@ void show_look(int room){
         printf("Sei in un teatro abbandonato, ti trovi sul ++palco++ e davanti a te vedi un ++balcone++.\n");
     
 }
-/* Manda un ping al server per capire se è ancora online*/
-int ping_server(int sd){
-    int ret;
-    char comando[6] = "ping";
 
-    // Mando il comando
-    ret = send(sd, comando, sizeof(comando), 0);
-    if(ret == -1){
-        perror("Errore nella send del comando ping");
-    }
-
-    return ret;
-}
-
+/* Qua troviamo il codice che gestisce la partita*/
 void gestione_partita1(int sd){
     int ret;
     char buf[256];
@@ -58,6 +46,12 @@ void gestione_partita1(int sd){
     char risposta[20];
     char comando[6], arg1[10], arg2[10];
     uint8_t esito;
+
+    // Per il timer
+    time_t start_time, cur_time; // Faccio partire il timer
+    int tempo_trascorso;
+
+    time(&start_time);
 
     // Si cicla infinitamente aspettando i comandi dell'utente
     while(1){
@@ -70,18 +64,37 @@ void gestione_partita1(int sd){
         memset(arg2, 0, sizeof(arg2));
         memset(risposta, 0, sizeof(risposta));
 
-        // Serve per capire se il server è sempre online
-        ret = ping_server(sd);
-        if(ret == -1){
-            close(sd);
-            printf("Il server è stato chiuso, arrivederci\n");
-            exit(0);
-        }
-
         //inserimento input
         if(fgets(buf_stdin, sizeof(buf_stdin), stdin) == NULL){
             printf("Errore durante la lettura da stdin\n");
             exit(1);
+        }
+
+        // Controllo se è scaduto il tempo
+        time(&cur_time);
+        tempo_trascorso = 4 - difftime(cur_time , start_time);
+        if(tempo_trascorso <= 0){
+            printf("Tempo scaduto, hai perso!\n");
+            break;
+        }
+
+        // Controllo se ci sono messaggi nella casella di posta
+        // Serve aqnche per capire se il server è stato chiuso
+        ret = recv(sd, buf, sizeof(buf), MSG_DONTWAIT);
+        if(ret == -1){
+            if(errno == EWOULDBLOCK){
+                printf("\nInbox: Non ci sono nuovi messaggi\n\n");
+            }
+            else {
+                perror("Errore nella ricezione del msg");
+                exit(1);
+            }
+        } else if(ret > 0){
+            printf("\nInbox: %s\n", buf);
+        } else {
+            close(sd);
+            printf("Il server è stato chiuso, arrivederci\n");
+            exit(0);
         }
 
         ret = sscanf(buf_stdin, "%s %s %s", comando, arg1, arg2);
@@ -145,7 +158,7 @@ void gestione_partita1(int sd){
             printf("%s", buf);
 
             // Se la stringa ricevuta è quella dell'enigma allora devo proporlo al giocatore
-            if(!strcmp(buf, "La vetrina è chiusa. Devi risolvere l'enigma!\nCompleta la frase...\nQual è la bevanda che ha causato la tragica fine di Romeo e Giulietta?\n") || !strcmp(buf, "Il baule è bloccato. Devi risolvere l'enigma!\nIn quale città si trova il balcone della donna amata da Romeo?\n")){
+            if(!strcmp(buf, "La vetrina è chiusa. Devi risolvere l'enigma!\nCompleta la frase...\nOh Romeo, Romeo, perché sei tu Romeo? Rinnega tuo padre, e rifiuta il tuo ...!\n") || !strcmp(buf, "Il baule è bloccato. Devi risolvere l'enigma!\nIn quale città si trova il balcone della donna amata da Romeo?\n")){
                 fgets(risposta, sizeof(risposta), stdin);
             
                 // Mando la risposta al server
@@ -237,8 +250,30 @@ void gestione_partita1(int sd){
             }
             printf("%s", buf);
 
+        } else if(ret == 1 && !strcmp(comando, "msg")){ // msg
+
+            // Devo mandare il comando al server
+            ret = send(sd, comando, sizeof(comando), 0);
+            if(ret == -1){
+                perror("Errore nella send del comando msg");
+                exit(1);
+            }
+
+            printf("Inserisci il messaggio: ");
+            // Non posso mettere il messaggio su arg1 perché sarebbe limitato a pochi caratteri
+            // Devo inserirlo successivamente 
+            fgets(buf, sizeof(buf), stdin);
+
+            ret = send(sd, buf, sizeof(buf), 0);
+            if(ret == -1){
+                perror("Errore nella send del messaggio");
+                exit(1);
+            }
+
+
         } else if(ret == 1 && !strcmp(comando, "end")){ // end
 
+            printf("Arrivederci!\n");
             break;
 
         } else {
@@ -247,6 +282,7 @@ void gestione_partita1(int sd){
             printf("\ttake object\n");
             printf("\tuse object1 [object2]\n");
             printf("\tobjs\n");
+            printf("\tmsg\n");
             printf("\tend\n");     
             continue;
         }
@@ -261,11 +297,13 @@ void gestione_partita1(int sd){
         }
 
         if(esito == 2){
-            printf("Complimenti hai vinto!!!\n");
+            printf("Complimenti hai vinto!!!\nAdesso puoi goderti lo spettacolo!");
             break;
         }
 
-        printf("Tempo rimanente: \t Token raccolti: %d\t Token rimasti: %d\t\n", esito, 2-esito);
+        time(&cur_time);
+        tempo_trascorso = 4 - difftime(cur_time , start_time);
+        printf("Tempo rimanente: %d secondi\t Token raccolti: %d\t Token rimasti: %d\t\n", tempo_trascorso, esito, 2-esito);
 
     }
 }

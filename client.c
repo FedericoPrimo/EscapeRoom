@@ -27,7 +27,7 @@ int main(int argc, char* argv[]){
         printf("Inserire correttamente la porta.\n\n\tSintassi: ./client <porta>\n\n");
         exit(1);
     }
-    porta = htons(4243);
+    porta = htons(4242);
 
     // Creazione socket client
     sd = creazione_indirizzo_server(&server_addr, porta);
@@ -73,7 +73,7 @@ int main(int argc, char* argv[]){
     } else if(!strcmp(buf, "0")){
         printf("Account non trovato, ti abbiamo registrato!\n");
     } else {
-        printf("Account già online, impossibile connettersi!\n");
+        printf("Account già online o password errata, impossibile connettersi!\n");
         return 0;
     }
 

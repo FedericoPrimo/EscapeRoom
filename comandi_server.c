@@ -49,6 +49,11 @@ int comando_login(int sd, struct Account **lista){
         printf("Accesso da parte dell'account con id: %d\n", temp->id);
     } else {
         // Non è presente e registro automaticamente
+
+        if(check_account_solo_email(lista, email) != NULL){
+            // Se è presente significa che ha sbagliato la password
+            return -2;
+        }
         strcpy(dati, "0");
         ret = send(sd, dati, sizeof(dati), 0);
         if(ret == -1){
@@ -255,7 +260,7 @@ void comando_take(int sd, struct Sessione* sessione, int type){
             if(!sessione->flags[3]){
                 // La vetrina è chiusa
                 // Devo mostrare l'enigma (flag 3 == 0)
-                strcpy(buf, "La vetrina è chiusa. Devi risolvere l'enigma!\nCompleta la frase...\nQual è la bevanda che ha causato la tragica fine di Romeo e Giulietta?\n");
+                strcpy(buf, "La vetrina è chiusa. Devi risolvere l'enigma!\nCompleta la frase...\nOh Romeo, Romeo, perché sei tu Romeo? Rinnega tuo padre, e rifiuta il tuo ...!\n");
 
                 ret = send(sd, buf, sizeof(buf), 0);
                 if(ret == -1){
@@ -271,7 +276,7 @@ void comando_take(int sd, struct Sessione* sessione, int type){
                 }
 
                 // Controllo la risposta e se giusta setto il flag
-                if(!strcmp(risposta, "veleno\n")){
+                if(!strcmp(risposta, "nome\n")){
                     strcpy(buf, "Il lucchetto si è aperto e dentro e puoi prendere la testa del manichino\n");
                     sessione->flags[3] = 1;
                 } else {

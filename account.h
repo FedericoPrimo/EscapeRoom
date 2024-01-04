@@ -18,7 +18,8 @@ struct Account{
 struct Account* new_account();
 void del_account(struct Account**, struct Account*);
 void ins_account(struct Account**, struct Account*);
-struct Account* check_account(struct Account**, char*, char*);
+struct Account* check_account(struct Account** lista, char* email, char* passw);
+struct Account* check_account_solo_email(struct Account** lista, char* email);
 void offline_account_by_id(struct Account **lista, int id);
 
 #endif
