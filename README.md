@@ -5,3 +5,6 @@ Valutazione: Non mi ha dato il voto numerico in maniera esplicita ma ha detto ch
 # Consigli per il popolo
 Consiglio di consultare il progetto per avere spunti ma di non copiarlo spudoratamente che il Pisto se ne accorge.
 Inoltre consiglio di creare un gioco molto molto semplice e di soffermarvi molto di più sulla gestione dei socket e degli argomenti del corso dato che le domande all'orale saranno su quello.
+
+## Come eseguire?
+Basta lanciare lo script ./exec2024.sh da terminale
